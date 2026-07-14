@@ -36,10 +36,15 @@ flaui-cli close                  # stop the session
 | `attach --pid \| --process \| --title` | Attach to a running app |
 | `snapshot [ref] [--depth N]` | Snapshot the active window or a subtree |
 | `desktop [--depth N]` | Snapshot all top-level windows |
-| `click <ref>` | Pattern-first click (Invoke/Toggle/Select, mouse fallback) |
+| `windows` / `window-select <ref>` | List the app's windows / switch the active one |
+| `get <ref> [property]` | Read an element property (or dump all) |
+| `screenshot [ref] [--filename P]` | Capture the window or an element to a PNG |
+| `click` / `dblclick` / `rightclick` / `hover` / `focus` `<ref>` | Pointer and focus actions (pattern-first) |
+| `check` / `uncheck` / `toggle` / `select` / `expand` / `collapse` `<ref>` | State actions |
 | `fill <ref> <text> [--submit]` | Set a textbox value, optionally press Enter |
-| `type <text>` | Type into the focused element |
-| `press <key>` | Enter, Tab, ArrowDown, Escape, F5, … |
+| `type <text>` / `press <key>` | Type into focus / press Enter, Tab, ArrowDown, F5, … |
+| `wait <ref> [--timeout ms]` | Wait until an element is enabled and on-screen |
+| `batch [--file P]` | Run a JSON array of commands in one round-trip |
 | `list` / `close` / `close-all` / `kill-all` | Session management |
 | `skill install` | Install the Claude Code skill to `~/.claude/skills` |
 

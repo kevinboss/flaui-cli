@@ -67,12 +67,40 @@ internal static class DaemonHost
         "attach-title" => s.AttachTitle(r.Title ?? ""),
         "snapshot" => s.Snapshot(r.Ref, r.Depth ?? SnapshotBuilder.DefaultDepth),
         "desktop" => s.SnapshotDesktop(r.Depth ?? 3),
+        "windows" => s.Windows(),
+        "window-select" => s.WindowSelect(r.Ref ?? ""),
+        "get" => s.Get(r.Ref ?? "", r.Property),
+        "screenshot" => s.Screenshot(r.Ref, r.Filename),
         "click" => s.Click(r.Ref ?? ""),
+        "dblclick" => s.DoubleClick(r.Ref ?? ""),
+        "rightclick" => s.RightClick(r.Ref ?? ""),
+        "hover" => s.Hover(r.Ref ?? ""),
+        "focus" => s.Focus(r.Ref ?? ""),
+        "check" => s.Check(r.Ref ?? ""),
+        "uncheck" => s.Uncheck(r.Ref ?? ""),
+        "toggle" => s.Toggle(r.Ref ?? ""),
+        "select" => s.Select(r.Ref ?? ""),
+        "expand" => s.Expand(r.Ref ?? ""),
+        "collapse" => s.Collapse(r.Ref ?? ""),
         "type" => s.Type(r.Text ?? ""),
         "fill" => s.Fill(r.Ref ?? "", r.Text ?? "", r.Submit),
         "press" => s.Press(r.Key ?? ""),
+        "wait" => s.Wait(r.Ref ?? "", r.TimeoutMs ?? 5000),
+        "batch" => Batch(s, r),
         _ => CommandResult.Fail($"Unknown command '{r.Cmd}'"),
     };
+
+    /// <summary>Run a sequence of commands in one round-trip, stopping at the first failure.</summary>
+    private static CommandResult Batch(Session s, DaemonRequest r)
+    {
+        CommandResult last = new() { Ok = true, Note = "batch (empty)" };
+        foreach (var item in r.Batch ?? [])
+        {
+            last = Dispatch(s, item);
+            if (!last.Ok) return last;
+        }
+        return last;
+    }
 
     private static async Task Reply(NamedPipeServerStream server, StreamWriter writer, DaemonResponse response)
     {

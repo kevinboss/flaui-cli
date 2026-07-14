@@ -44,16 +44,43 @@ flaui-cli snapshot                 # active window
 flaui-cli snapshot w1e5            # just that element's subtree
 flaui-cli snapshot --depth 4       # limit depth
 flaui-cli desktop                  # all top-level windows (overview)
+flaui-cli windows                  # the app's top-level windows, with refs
+flaui-cli window-select w3         # make another window the active one
+flaui-cli get w1e2 value           # read one property; omit it to dump all
+                                   # name|value|automationId|controlType|className|helpText|enabled|offscreen|bounds
+flaui-cli screenshot               # PNG of the active window
+flaui-cli screenshot w1e5 --filename=btn.png
 ```
 
 ### Interacting
 
 ```bash
 flaui-cli click w1e42             # pattern-first click (Invoke/Toggle/Select, mouse fallback)
+flaui-cli dblclick w1e42
+flaui-cli rightclick w1e42
+flaui-cli hover w1e42
+flaui-cli focus w1e2
 flaui-cli fill w1e3 "text"        # set a textbox value
 flaui-cli fill w1e3 "text" --submit   # set value then press Enter
+flaui-cli check w1e7              # check / uncheck / toggle a checkbox or toggle button
+flaui-cli uncheck w1e7
+flaui-cli toggle w1e7
+flaui-cli select w1e9             # select a list item / tab / radio by ref
+flaui-cli expand w1e9             # expand / collapse a tree node or combobox
+flaui-cli collapse w1e9
 flaui-cli type "typed into focus" # send keystrokes to whatever has focus
 flaui-cli press Enter             # Enter, Tab, ArrowDown, Escape, Space, F5, …
+flaui-cli wait w1e5               # wait until enabled + on-screen (--timeout ms, default 5000)
+```
+
+### Batch
+
+Run several commands in one round-trip (lower latency). Pass a JSON array of command objects via
+`--file` or stdin; it stops at the first failure.
+
+```bash
+flaui-cli batch --file steps.json
+echo '[{"cmd":"fill","ref":"w1e2","text":"hi"},{"cmd":"click","ref":"w1e5"},{"cmd":"snapshot"}]' | flaui-cli batch
 ```
 
 ### Sessions
@@ -110,7 +137,7 @@ If nothing has focus for `type`, click or fill an element first to give it focus
 flaui-cli launch DemoWpfApp.exe
 flaui-cli snapshot                 # find the InputBox and GreetButton refs
 flaui-cli fill w1e2 "Kevin"
-flaui-cli click w1e4               # GreetButton
+flaui-cli click w1e5               # GreetButton
 flaui-cli snapshot                 # OutputLabel now shows "Hello, Kevin!"
 flaui-cli close
 ```

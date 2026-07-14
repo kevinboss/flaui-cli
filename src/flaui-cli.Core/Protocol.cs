@@ -31,6 +31,10 @@ public sealed class DaemonRequest
     public string? Key { get; set; }
     public int? Depth { get; set; }
     public bool Submit { get; set; }
+    public string? Property { get; set; }
+    public string? Filename { get; set; }
+    public int? TimeoutMs { get; set; }
+    public List<DaemonRequest>? Batch { get; set; }
 }
 
 /// <summary>The daemon's reply: a serialized <see cref="CommandResult"/>.</summary>

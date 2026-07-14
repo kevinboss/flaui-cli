@@ -41,6 +41,10 @@ public static class Renderer
             Console.Write(response.Snapshot);
             if (!response.Snapshot.EndsWith('\n')) Console.WriteLine();
         }
+        else if (!string.IsNullOrEmpty(response.Value))
+        {
+            Console.WriteLine(response.Value);
+        }
         else if (response.Note is not null)
         {
             Console.WriteLine(response.Note);
