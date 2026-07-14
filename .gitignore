@@ -1,0 +1,26 @@
+# Output folders
+Packages/
+Artifacts/
+artifacts/
+publish/
+TestResults/
+bin/
+obj/
+
+# Generated files
+Version.props
+*.metaproj
+*.metaproj.tmp
+
+# User files
+*.sln.DotSettings.user
+*.csproj.DotSettings.user
+*.csproj.user
+
+# IDE
+.vs/
+.idea/
+_ReSharper.Caches/
+
+# macOS
+.DS_Store

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="flaui-cli.Core/flaui-cli.Core.csproj" />
+  <Project Path="flaui-cli/flaui-cli.csproj" />
+</Solution>

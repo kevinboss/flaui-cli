@@ -1,0 +1,21 @@
+<Window x:Class="DemoWpfApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="flaui-cli demo" Height="260" Width="380">
+    <StackPanel Margin="16">
+        <TextBlock Text="Name:" Margin="0,0,0,4"/>
+        <TextBox x:Name="InputBox"
+                 AutomationProperties.AutomationId="InputBox"
+                 Margin="0,0,0,8"/>
+        <CheckBox x:Name="ShoutCheck"
+                  AutomationProperties.AutomationId="ShoutCheck"
+                  Content="Shout" Margin="0,0,0,8"/>
+        <Button x:Name="GreetButton"
+                AutomationProperties.AutomationId="GreetButton"
+                Content="Greet" Width="90" HorizontalAlignment="Left"
+                Click="GreetButton_Click"/>
+        <TextBlock x:Name="OutputLabel"
+                   AutomationProperties.AutomationId="OutputLabel"
+                   Margin="0,14,0,0" FontWeight="Bold"/>
+    </StackPanel>
+</Window>

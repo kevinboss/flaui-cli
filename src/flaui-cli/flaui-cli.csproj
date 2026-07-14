@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>FlauiCli</RootNamespace>
+    <AssemblyName>flaui-cli</AssemblyName>
+    <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>
+
+    <!-- PackAsTool can't be used: FlaUI needs a -windows TFM, which global tools reject.
+         Ship as a self-contained single-file exe instead (the haus / port model). -->
+    <Version>0.1.0</Version>
+    <Authors>kevinboss</Authors>
+    <Description>Playwright-style CLI for driving Windows desktop apps via FlaUI / UIA3.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="Spectre.Console.Cli" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\flaui-cli.Core\flaui-cli.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ship the skill inside the exe so `skill install` works from a published single-file build. -->
+    <EmbeddedResource Include="..\..\skill\SKILL.md">
+      <LogicalName>SKILL.md</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
