@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-Windows-0078D6" alt="Platform: Windows">
   <img src="https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white" alt=".NET">
-  <img src="https://img.shields.io/badge/UI%20Automation-FlaUI%20(UIA3)-6E4AFF" alt="FlaUI UIA3">
+  <img src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" alt="Windows">
+  <img src="https://img.shields.io/badge/UI%20Automation-FlaUI%20(UIA3)-6E4AFF" alt="FlaUI (UIA3)">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT">
 </p>
 
