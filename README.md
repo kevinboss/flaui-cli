@@ -1,4 +1,15 @@
-# flaui-cli
+<h1 align="center">flaui-cli</h1>
+
+<p align="center">
+  Drive Windows desktop apps from the command line &mdash; Playwright-style, through UI Automation.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-Windows-0078D6" alt="Platform: Windows">
+  <img src="https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white" alt=".NET">
+  <img src="https://img.shields.io/badge/UI%20Automation-FlaUI%20(UIA3)-6E4AFF" alt="FlaUI UIA3">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT">
+</p>
 
 > This project is being developed using AI development tools. However, every line of code is reviewed and approved by a human before being committed.
 
