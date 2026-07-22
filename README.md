@@ -1,5 +1,7 @@
 # flaui-cli
 
+> This project is being developed using AI development tools. However, every line of code is reviewed and approved by a human before being committed.
+
 A Playwright-style command-line tool for driving Windows desktop applications (Win32, WinForms,
 WPF, UWP) through their UI Automation tree. A per-session background daemon holds the app's live
 UIA tree and hands out short element refs (`w1e42`); you `snapshot` to see the tree, then act on
