@@ -19,7 +19,7 @@ public sealed class GetSettings : GlobalSettings
 
 public sealed class GetCommand : Command<GetSettings>
 {
-    public override int Execute(CommandContext context, GetSettings settings) =>
+    public override int Execute(CommandContext context, GetSettings settings, CancellationToken cancellationToken) =>
         Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), new DaemonRequest { Cmd = "get", Ref = settings.Ref, Property = settings.Property }));
 }
 
@@ -36,19 +36,19 @@ public sealed class ScreenshotSettings : GlobalSettings
 
 public sealed class ScreenshotCommand : Command<ScreenshotSettings>
 {
-    public override int Execute(CommandContext context, ScreenshotSettings settings) =>
+    public override int Execute(CommandContext context, ScreenshotSettings settings, CancellationToken cancellationToken) =>
         Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), new DaemonRequest { Cmd = "screenshot", Ref = settings.Ref, Filename = settings.Filename }));
 }
 
 public sealed class WindowsCommand : Command<GlobalSettings>
 {
-    public override int Execute(CommandContext context, GlobalSettings settings) =>
+    public override int Execute(CommandContext context, GlobalSettings settings, CancellationToken cancellationToken) =>
         Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), new DaemonRequest { Cmd = "windows" }));
 }
 
 public sealed class WindowSelectCommand : Command<RefSettings>
 {
-    public override int Execute(CommandContext context, RefSettings settings) =>
+    public override int Execute(CommandContext context, RefSettings settings, CancellationToken cancellationToken) =>
         Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), new DaemonRequest { Cmd = "window-select", Ref = settings.Ref }));
 }
 
@@ -61,6 +61,6 @@ public sealed class WaitSettings : RefSettings
 
 public sealed class WaitCommand : Command<WaitSettings>
 {
-    public override int Execute(CommandContext context, WaitSettings settings) =>
+    public override int Execute(CommandContext context, WaitSettings settings, CancellationToken cancellationToken) =>
         Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), new DaemonRequest { Cmd = "wait", Ref = settings.Ref, TimeoutMs = settings.TimeoutMs }));
 }

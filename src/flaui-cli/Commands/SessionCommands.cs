@@ -6,7 +6,7 @@ namespace FlauiCli.Commands;
 
 public sealed class ListCommand : Command<GlobalSettings>
 {
-    public override int Execute(CommandContext context, GlobalSettings settings)
+    public override int Execute(CommandContext context, GlobalSettings settings, CancellationToken cancellationToken)
     {
         var sessions = DaemonClient.ListSessions();
         if (sessions.Count == 0)
@@ -22,7 +22,7 @@ public sealed class ListCommand : Command<GlobalSettings>
 
 public sealed class CloseCommand : Command<GlobalSettings>
 {
-    public override int Execute(CommandContext context, GlobalSettings settings)
+    public override int Execute(CommandContext context, GlobalSettings settings, CancellationToken cancellationToken)
     {
         var session = settings.ResolveSession();
         var response = DaemonClient.SendIfRunning(session, new DaemonRequest { Cmd = "shutdown" });
@@ -33,7 +33,7 @@ public sealed class CloseCommand : Command<GlobalSettings>
 
 public sealed class CloseAllCommand : Command<GlobalSettings>
 {
-    public override int Execute(CommandContext context, GlobalSettings settings)
+    public override int Execute(CommandContext context, GlobalSettings settings, CancellationToken cancellationToken)
     {
         var sessions = DaemonClient.ListSessions();
         foreach (var s in sessions)
@@ -45,7 +45,7 @@ public sealed class CloseAllCommand : Command<GlobalSettings>
 
 public sealed class KillAllCommand : Command<GlobalSettings>
 {
-    public override int Execute(CommandContext context, GlobalSettings settings)
+    public override int Execute(CommandContext context, GlobalSettings settings, CancellationToken cancellationToken)
     {
         var killed = DaemonClient.KillAll();
         Console.WriteLine($"Killed {killed} daemon process(es).");

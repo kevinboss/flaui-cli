@@ -15,7 +15,7 @@ public sealed class ClickSettings : GlobalSettings
 
 public sealed class ClickCommand : Command<ClickSettings>
 {
-    public override int Execute(CommandContext context, ClickSettings settings)
+    public override int Execute(CommandContext context, ClickSettings settings, CancellationToken cancellationToken)
     {
         var request = new DaemonRequest { Cmd = "click", Ref = settings.Ref };
         return Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), request));
@@ -31,7 +31,7 @@ public sealed class TypeSettings : GlobalSettings
 
 public sealed class TypeCommand : Command<TypeSettings>
 {
-    public override int Execute(CommandContext context, TypeSettings settings)
+    public override int Execute(CommandContext context, TypeSettings settings, CancellationToken cancellationToken)
     {
         var request = new DaemonRequest { Cmd = "type", Text = settings.Text };
         return Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), request));
@@ -55,7 +55,7 @@ public sealed class FillSettings : GlobalSettings
 
 public sealed class FillCommand : Command<FillSettings>
 {
-    public override int Execute(CommandContext context, FillSettings settings)
+    public override int Execute(CommandContext context, FillSettings settings, CancellationToken cancellationToken)
     {
         var request = new DaemonRequest { Cmd = "fill", Ref = settings.Ref, Text = settings.Text, Submit = settings.Submit };
         return Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), request));
@@ -71,7 +71,7 @@ public sealed class PressSettings : GlobalSettings
 
 public sealed class PressCommand : Command<PressSettings>
 {
-    public override int Execute(CommandContext context, PressSettings settings)
+    public override int Execute(CommandContext context, PressSettings settings, CancellationToken cancellationToken)
     {
         var request = new DaemonRequest { Cmd = "press", Key = settings.Key };
         return Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), request));

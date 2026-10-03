@@ -6,7 +6,7 @@ namespace FlauiCli.Commands;
 /// <summary>Writes the embedded SKILL.md into the user's Claude Code skills directory.</summary>
 public sealed class SkillInstallCommand : Command<GlobalSettings>
 {
-    public override int Execute(CommandContext context, GlobalSettings settings)
+    public override int Execute(CommandContext context, GlobalSettings settings, CancellationToken cancellationToken)
     {
         using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SKILL.md");
         if (stream is null)

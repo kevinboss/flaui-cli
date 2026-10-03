@@ -19,7 +19,7 @@ public sealed class LaunchSettings : GlobalSettings
 
 public sealed class LaunchCommand : Command<LaunchSettings>
 {
-    public override int Execute(CommandContext context, LaunchSettings settings)
+    public override int Execute(CommandContext context, LaunchSettings settings, CancellationToken cancellationToken)
     {
         var request = new DaemonRequest { Cmd = "launch", Exe = settings.Exe, Args = string.Join(' ', settings.Args) };
         return Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), request));
@@ -43,7 +43,7 @@ public sealed class AttachSettings : GlobalSettings
 
 public sealed class AttachCommand : Command<AttachSettings>
 {
-    public override int Execute(CommandContext context, AttachSettings settings)
+    public override int Execute(CommandContext context, AttachSettings settings, CancellationToken cancellationToken)
     {
         DaemonRequest request;
         if (settings.Pid is { } pid) request = new DaemonRequest { Cmd = "attach-pid", Pid = pid };

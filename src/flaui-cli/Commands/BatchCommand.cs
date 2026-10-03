@@ -21,7 +21,7 @@ public sealed class BatchSettings : GlobalSettings
 /// </summary>
 public sealed class BatchCommand : Command<BatchSettings>
 {
-    public override int Execute(CommandContext context, BatchSettings settings)
+    public override int Execute(CommandContext context, BatchSettings settings, CancellationToken cancellationToken)
     {
         var json = settings.File is not null ? System.IO.File.ReadAllText(settings.File) : Console.In.ReadToEnd();
         List<DaemonRequest>? items;

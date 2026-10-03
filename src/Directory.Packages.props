@@ -5,7 +5,7 @@
   <ItemGroup>
     <PackageVersion Include="FlaUI.Core" Version="5.0.0" />
     <PackageVersion Include="FlaUI.UIA3" Version="5.0.0" />
-    <PackageVersion Include="Spectre.Console" Version="0.51.1" />
-    <PackageVersion Include="Spectre.Console.Cli" Version="0.51.1" />
+    <PackageVersion Include="Spectre.Console" Version="0.57.2" />
+    <PackageVersion Include="Spectre.Console.Cli" Version="0.57.2" />
   </ItemGroup>
 </Project>
