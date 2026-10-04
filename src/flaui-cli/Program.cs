@@ -13,6 +13,7 @@ if (args.Contains("--daemon"))
 }
 
 // Client role: the user-facing CLI.
+Console.OutputEncoding = System.Text.Encoding.UTF8;
 var app = new CommandApp();
 app.Configure(config =>
 {

@@ -50,7 +50,7 @@ public static class SnapshotBuilder
             AutomationElement[] children;
             try { children = el.FindAllChildren(); }
             catch { return; }
-            foreach (var child in children)
+            foreach (var child in children.Concat(SelectedOutsideChildren(el, children)))
             {
                 Walk(child, recursion + 1, childIndent);
                 if (truncated) return;
@@ -59,6 +59,20 @@ public static class SnapshotBuilder
 
         Walk(root, 0, 0);
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Selected items a container reports through the Selection pattern but leaves out of its
+    /// children. Some WPF controls keep a stale child list (items added after the first query never
+    /// appear), while the selection is resolved fresh, so this is the only route to that content.
+    /// </summary>
+    private static IEnumerable<AutomationElement> SelectedOutsideChildren(AutomationElement el, AutomationElement[] children)
+    {
+        var selected = Safe.Get(() => el.Patterns.Selection.PatternOrDefault?.Selection?.Value);
+        if (selected is not { Length: > 0 }) return [];
+
+        var known = children.Select(ElementRegistry.RuntimeKey).OfType<string>().ToHashSet();
+        return selected.Where(s => ElementRegistry.RuntimeKey(s) is not { } key || !known.Contains(key));
     }
 
     private static void AppendStates(StringBuilder sb, AutomationElement el, string role)

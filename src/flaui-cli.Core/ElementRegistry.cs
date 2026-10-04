@@ -51,7 +51,7 @@ public sealed class ElementRegistry
         if (runtimeKey != null) _byRuntime[runtimeKey] = known;
     }
 
-    private static string? RuntimeKey(AutomationElement element)
+    internal static string? RuntimeKey(AutomationElement element)
     {
         var id = Safe.Get(() => element.Properties.RuntimeId.ValueOrDefault);
         return id is { Length: > 0 } ? string.Join(".", id) : null;
