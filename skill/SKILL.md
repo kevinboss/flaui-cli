@@ -73,6 +73,25 @@ flaui-cli press Enter             # Enter, Tab, ArrowDown, Escape, Space, F5, â€
 flaui-cli wait w1e5               # wait until enabled + on-screen (--timeout ms, default 5000)
 ```
 
+### When the tree can't see it: OCR
+
+Some apps draw parts of their UI without exposing them to UI Automation, or expose a broken tree.
+When a region is visible on screen but missing from `snapshot`, read it with OCR and click by coordinates.
+
+```bash
+flaui-cli ocr                      # text lines of the active window, each with its screen center
+flaui-cli ocr w1e5 --words         # only that element's area, plus a position per word
+flaui-cli ocr --lang de-CH         # pick the OCR language (default: user profile languages)
+flaui-cli click-at 303 360        # click at screen coordinates taken from an [at=x,y]
+flaui-cli click-at 400 300 --double
+flaui-cli click-at 400 300 --right
+```
+
+Each OCR line looks like `- line "Greet" [at=303,360]`.
+OCR renders the window itself, so it works while the window is covered, but text scrolled out of view is not read and OCR can misread characters (`O` for `0`, `l` for `1`).
+`click-at` brings the app to the front when the point is covered and refuses to click if the point still shows another app's window.
+Prefer refs whenever the snapshot has the element; coordinates break as soon as the layout moves.
+
 ### Batch
 
 Run several commands in one round-trip (lower latency). Pass a JSON array of command objects via

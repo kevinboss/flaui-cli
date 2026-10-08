@@ -34,6 +34,12 @@ public sealed class DaemonRequest
     public string? Property { get; set; }
     public string? Filename { get; set; }
     public int? TimeoutMs { get; set; }
+    public int? X { get; set; }
+    public int? Y { get; set; }
+    public bool Double { get; set; }
+    public bool Right { get; set; }
+    public bool Words { get; set; }
+    public string? Lang { get; set; }
     public List<DaemonRequest>? Batch { get; set; }
 }
 

@@ -52,7 +52,9 @@ flaui-cli close                  # stop the session
 | `windows` / `window-select <ref>` | List the app's windows / switch the active one |
 | `get <ref> [property]` | Read an element property (or dump all) |
 | `screenshot [ref] [--filename P]` | Capture the window or an element to a PNG |
+| `ocr [ref] [--words] [--lang TAG]` | Read on-screen text with screen positions, for UI that UI Automation can't see |
 | `click` / `dblclick` / `rightclick` / `hover` / `focus` `<ref>` | Pointer and focus actions (pattern-first) |
+| `click-at <x> <y> [--double] [--right]` | Click at screen coordinates, e.g. an `[at=x,y]` from `ocr` |
 | `check` / `uncheck` / `toggle` / `select` / `expand` / `collapse` `<ref>` | State actions |
 | `fill <ref> <text> [--submit]` | Set a textbox value, optionally press Enter |
 | `type <text>` / `press <key>` | Type into focus / press Enter, Tab, ArrowDown, F5, … |

@@ -160,7 +160,50 @@ public sealed class Session : IDisposable
         return new CommandResult { Ok = true, Note = "screenshot", Value = Path.GetFullPath(path) };
     });
 
+    public CommandResult Ocr(string? reference, bool words, string? language) => Exec(() =>
+    {
+        var target = _activeWindow as AutomationElement;
+        if (reference != null)
+        {
+            target = _registry.Resolve(reference);
+            if (target == null) return Unknown(reference);
+        }
+        if (target == null) return CommandResult.Fail("No active window; launch or attach first.");
+
+        var area = target.BoundingRectangle;
+        var hwnd = Safe.Get(() => _activeWindow?.Properties.NativeWindowHandle.ValueOrDefault ?? IntPtr.Zero);
+        string text;
+        if (WindowCapture.Print(hwnd, area) is { } printed)
+        {
+            using (printed.Image) text = TextRecognizer.Read(printed.Image, printed.Origin, words, language);
+        }
+        else
+        {
+            using var image = Capture.Rectangle(area);
+            text = TextRecognizer.Read(image.Bitmap, area.Location, words, language);
+        }
+        return new CommandResult { Ok = true, Note = "ocr", Value = text };
+    });
+
     // ---- actions -----------------------------------------------------------
+
+    public CommandResult ClickAt(int x, int y, bool doubleClick, bool right) => Exec(() =>
+    {
+        var point = new System.Drawing.Point(x, y);
+        var processId = Safe.Get(() => _activeWindow?.Properties.ProcessId.ValueOrDefault ?? 0);
+        if (processId != 0 && !WindowHitTest.BelongsToProcess(point, processId))
+        {
+            Safe.Get<object?>(() => { _activeWindow!.SetForeground(); return null; });
+            Thread.Sleep(200);
+            if (!WindowHitTest.BelongsToProcess(point, processId))
+                return CommandResult.Fail($"{x},{y} is covered by another window, and the app could not be brought to the front. Bring it forward and retry.");
+        }
+
+        var button = right ? MouseButton.Right : MouseButton.Left;
+        if (doubleClick) Mouse.DoubleClick(point, button);
+        else Mouse.Click(point, button);
+        return BuildResult($"click-at {x},{y}");
+    });
 
     public CommandResult Click(string r) => ActOn(r, $"click {r}", el =>
     {

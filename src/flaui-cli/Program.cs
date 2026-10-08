@@ -26,7 +26,9 @@ app.Configure(config =>
     config.AddCommand<WindowSelectCommand>("window-select").WithDescription("Make a window the active one by ref.");
     config.AddCommand<GetCommand>("get").WithDescription("Read an element property.");
     config.AddCommand<ScreenshotCommand>("screenshot").WithDescription("Capture the window or an element to a PNG.");
+    config.AddCommand<OcrCommand>("ocr").WithDescription("Read on-screen text with positions (for UI that UIA can't see).");
     config.AddCommand<ClickCommand>("click").WithDescription("Click an element by ref.");
+    config.AddCommand<ClickAtCommand>("click-at").WithDescription("Click at screen coordinates.");
     config.AddCommand<DoubleClickCommand>("dblclick").WithDescription("Double-click an element by ref.");
     config.AddCommand<RightClickCommand>("rightclick").WithDescription("Right-click an element by ref.");
     config.AddCommand<HoverCommand>("hover").WithDescription("Move the mouse over an element.");
