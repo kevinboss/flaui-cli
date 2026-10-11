@@ -45,7 +45,7 @@ flaui-cli close                  # stop the session
 
 | Command | Purpose |
 |---|---|
-| `launch <exe> [-- args]` | Launch an app and attach automation |
+| `launch <exe> [-- args] [--inproc] [--minimized]` | Launch an app and attach automation; `--inproc` loads the in-process agent |
 | `attach --pid \| --process \| --title` | Attach to a running app |
 | `snapshot [ref] [--depth N]` | Snapshot the active window or a subtree |
 | `desktop [--depth N]` | Snapshot all top-level windows |
@@ -57,7 +57,7 @@ flaui-cli close                  # stop the session
 | `click-at <x> <y> [--double] [--right]` | Click at screen coordinates, e.g. an `[at=x,y]` from `ocr` |
 | `check` / `uncheck` / `toggle` / `select` / `expand` / `collapse` `<ref>` | State actions |
 | `fill <ref> <text> [--submit]` | Set a textbox value, optionally press Enter |
-| `type <text>` / `press <key>` | Type into focus / press Enter, Tab, ArrowDown, F5, … |
+| `type <text>` / `press <key> [ref]` | Type into focus / press Enter, Tab, ArrowDown, F5, … (into a given element with a ref) |
 | `wait <ref> [--timeout ms]` | Wait until an element is enabled and on-screen |
 | `batch [--file P]` | Run a JSON array of commands in one round-trip |
 | `list` / `close` / `close-all` / `kill-all` | Session management |
@@ -73,6 +73,12 @@ Global options: `-s=<session>` (or `$FLAUI_CLI_SESSION`), `--raw`, `--json`.
   of the session, deduped by UIA `RuntimeId`.
 - Client and daemon exchange one JSON request/response per command over a named pipe. The daemon
   shuts itself down after 10 minutes idle.
+- In-process mode (`launch --inproc`, WPF apps on .NET 8+) adds a third piece: an agent assembly,
+  embedded in the exe, that the daemon writes to disk and the app loads as a .NET startup hook.
+  The agent serves its own pipe from inside the app and runs each request on the app's UI thread.
+  The daemon routes `p` refs to it and everything else through UIA as before.
+  Actions run through automation peers the agent creates for the target element, so they need no
+  real input, focus or visible window.
 
 ## Claude Code skill
 
@@ -84,6 +90,7 @@ desktop apps the way the `playwright-cli` skill drives browsers.
 ```
 src/flaui-cli        entry point: CLI client + daemon host
 src/flaui-cli.Core   engine: UIA worker, session, ref registry, snapshot builder
+src/flaui-cli.Agent  in-process agent: startup hook loaded into the app for --inproc
 samples/DemoWpfApp   a small WPF app used for verification
 skill/SKILL.md       the Claude Code skill (embedded into the exe)
 ```

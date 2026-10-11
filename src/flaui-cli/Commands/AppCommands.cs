@@ -15,13 +15,21 @@ public sealed class LaunchSettings : GlobalSettings
     [CommandArgument(1, "[ARGS]")]
     [Description("Arguments passed to the executable.")]
     public string[] Args { get; set; } = [];
+
+    [CommandOption("--inproc")]
+    [Description("Load the in-process agent (WPF apps on .NET 8+): p-refs that work in the background and see UI the automation tree hides.")]
+    public bool Inproc { get; set; }
+
+    [CommandOption("--minimized")]
+    [Description("Start the app minimized.")]
+    public bool Minimized { get; set; }
 }
 
 public sealed class LaunchCommand : Command<LaunchSettings>
 {
     public override int Execute(CommandContext context, LaunchSettings settings, CancellationToken cancellationToken)
     {
-        var request = new DaemonRequest { Cmd = "launch", Exe = settings.Exe, Args = string.Join(' ', settings.Args) };
+        var request = new DaemonRequest { Cmd = "launch", Exe = settings.Exe, Args = string.Join(' ', settings.Args), Inproc = settings.Inproc, Minimized = settings.Minimized };
         return Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), request));
     }
 }

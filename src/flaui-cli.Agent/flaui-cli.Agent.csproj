@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Loaded into the target app as a startup hook, so it targets the oldest runtime it should
+         work with rather than the CLI's own. It must not reference anything beyond WPF and the BCL. -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>FlauiCli.Agent</RootNamespace>
+    <AssemblyName>flaui-cli.Agent</AssemblyName>
+  </PropertyGroup>
+</Project>

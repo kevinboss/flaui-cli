@@ -40,6 +40,8 @@ public sealed class DaemonRequest
     public bool Right { get; set; }
     public bool Words { get; set; }
     public string? Lang { get; set; }
+    public bool Inproc { get; set; }
+    public bool Minimized { get; set; }
     public List<DaemonRequest>? Batch { get; set; }
 }
 

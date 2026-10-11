@@ -19,6 +19,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\flaui-cli.Core\flaui-cli.Core.csproj" />
+    <ProjectReference Include="..\flaui-cli.Agent\flaui-cli.Agent.csproj" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained;PublishSingleFile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The agent runs inside the target app, never inside flaui-cli: it ships as a resource and the
+         inproc launch writes it to disk for the app's startup hook. -->
+    <EmbeddedResource Include="..\flaui-cli.Agent\bin\$(Configuration)\net8.0-windows\flaui-cli.Agent.dll">
+      <LogicalName>flaui-cli.Agent.dll</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

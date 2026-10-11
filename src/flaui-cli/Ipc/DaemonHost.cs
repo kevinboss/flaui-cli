@@ -61,7 +61,7 @@ internal static class DaemonHost
 
     private static CommandResult Dispatch(Session s, DaemonRequest r) => r.Cmd switch
     {
-        "launch" => s.Launch(r.Exe ?? "", r.Args ?? ""),
+        "launch" => s.Launch(r.Exe ?? "", r.Args ?? "", r.Inproc, r.Minimized),
         "attach-pid" => s.AttachPid(r.Pid ?? 0),
         "attach-process" => s.AttachProcess(r.Process ?? ""),
         "attach-title" => s.AttachTitle(r.Title ?? ""),
@@ -86,7 +86,7 @@ internal static class DaemonHost
         "collapse" => s.Collapse(r.Ref ?? ""),
         "type" => s.Type(r.Text ?? ""),
         "fill" => s.Fill(r.Ref ?? "", r.Text ?? "", r.Submit),
-        "press" => s.Press(r.Key ?? ""),
+        "press" => s.Press(r.Key ?? "", r.Ref),
         "wait" => s.Wait(r.Ref ?? "", r.TimeoutMs ?? 5000),
         "batch" => Batch(s, r),
         _ => CommandResult.Fail($"Unknown command '{r.Cmd}'"),

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -25,6 +26,7 @@ public sealed class Session : IDisposable
     private Application? _app;
     private bool _appOwned;
     private Window? _activeWindow;
+    private AgentClient? _agent;
 
     public string Name { get; }
     public DateTime LastCommandUtc { get; private set; } = DateTime.UtcNow;
@@ -37,10 +39,32 @@ public sealed class Session : IDisposable
 
     // ---- lifecycle ---------------------------------------------------------
 
-    public CommandResult Launch(string executable, string arguments) => Exec(() =>
+    public CommandResult Launch(string executable, string arguments, bool inproc, bool minimized) => Exec(() =>
     {
-        _app = Application.Launch(executable, arguments);
+        if (inproc || minimized)
+        {
+            var psi = new ProcessStartInfo(executable, arguments) { UseShellExecute = false };
+            if (Path.IsPathRooted(executable)) psi.WorkingDirectory = Path.GetDirectoryName(executable)!;
+            if (minimized) psi.WindowStyle = ProcessWindowStyle.Minimized;
+            if (inproc)
+            {
+                var agent = AgentDeployer.Extract();
+                psi.Environment["DOTNET_STARTUP_HOOKS"] = psi.Environment.TryGetValue("DOTNET_STARTUP_HOOKS", out var hooks) && !string.IsNullOrEmpty(hooks)
+                    ? hooks + Path.PathSeparator + agent
+                    : agent;
+            }
+            _app = Application.Launch(psi);
+        }
+        else
+        {
+            _app = Application.Launch(executable, arguments);
+        }
         _appOwned = true;
+        if (inproc)
+        {
+            _agent = new AgentClient(_app.ProcessId);
+            _agent.WaitReady(() => _app.HasExited, TimeSpan.FromSeconds(60));
+        }
         Safe.Get<object?>(() => { _app.WaitWhileMainHandleIsMissing(TimeSpan.FromSeconds(10)); return null; });
         _activeWindow = FindMainWindow();
         return BuildResult($"launched {executable}");
@@ -79,6 +103,8 @@ public sealed class Session : IDisposable
 
     public CommandResult Snapshot(string? reference, int depth) => Exec(() =>
     {
+        if (_agent != null && (reference == null || IsAgentRef(reference)))
+            return AgentResult(reference == null ? "snapshot" : $"snapshot {reference}", reference, depth);
         if (reference != null)
         {
             var el = _registry.Resolve(reference);
@@ -122,6 +148,12 @@ public sealed class Session : IDisposable
 
     public CommandResult Get(string reference, string? property) => Exec(() =>
     {
+        if (IsAgentRef(reference))
+        {
+            if (RequireAgent(reference) is { } missing) return missing;
+            var reply = _agent!.Send(new AgentCall { Cmd = "get", Ref = reference, Text = property });
+            return reply.Ok ? new CommandResult { Ok = true, Note = $"get {reference}", Value = reply.Value } : CommandResult.Fail(reply.Error ?? "agent error");
+        }
         var el = _registry.Resolve(reference);
         if (el == null) return Unknown(reference);
         var value = (property ?? "").ToLowerInvariant() switch
@@ -143,6 +175,7 @@ public sealed class Session : IDisposable
 
     public CommandResult Screenshot(string? reference, string? filename) => Exec(() =>
     {
+        if (reference != null && IsAgentRef(reference)) return NotInproc("screenshot");
         CaptureImage image;
         if (reference != null)
         {
@@ -162,6 +195,7 @@ public sealed class Session : IDisposable
 
     public CommandResult Ocr(string? reference, bool words, string? language) => Exec(() =>
     {
+        if (reference != null && IsAgentRef(reference)) return NotInproc("ocr");
         var target = _activeWindow as AutomationElement;
         if (reference != null)
         {
@@ -205,7 +239,7 @@ public sealed class Session : IDisposable
         return BuildResult($"click-at {x},{y}");
     });
 
-    public CommandResult Click(string r) => ActOn(r, $"click {r}", el =>
+    public CommandResult Click(string r) => IsAgentRef(r) ? ViaAgent("click", r, $"click {r}") : ActOn(r, $"click {r}", el =>
     {
         if (el.Patterns.Invoke.IsSupported) el.Patterns.Invoke.Pattern.Invoke();
         else if (el.Patterns.Toggle.IsSupported) el.Patterns.Toggle.Pattern.Toggle();
@@ -213,34 +247,34 @@ public sealed class Session : IDisposable
         else el.Click();
     });
 
-    public CommandResult DoubleClick(string r) => ActOn(r, $"dblclick {r}", el => el.DoubleClick());
+    public CommandResult DoubleClick(string r) => IsAgentRef(r) ? ViaAgent("dblclick", r, $"dblclick {r}") : ActOn(r, $"dblclick {r}", el => el.DoubleClick());
 
-    public CommandResult RightClick(string r) => ActOn(r, $"rightclick {r}", el => el.RightClick());
+    public CommandResult RightClick(string r) => IsAgentRef(r) ? Exec(() => NotInproc("rightclick")) : ActOn(r, $"rightclick {r}", el => el.RightClick());
 
-    public CommandResult Hover(string r) => ActOn(r, $"hover {r}", el =>
+    public CommandResult Hover(string r) => IsAgentRef(r) ? Exec(() => NotInproc("hover")) : ActOn(r, $"hover {r}", el =>
     {
         var b = el.BoundingRectangle;
         Mouse.MoveTo(new System.Drawing.Point(b.Left + b.Width / 2, b.Top + b.Height / 2));
     });
 
-    public CommandResult Focus(string r) => ActOn(r, $"focus {r}", el => el.Focus());
+    public CommandResult Focus(string r) => IsAgentRef(r) ? ViaAgent("focus", r, $"focus {r}") : ActOn(r, $"focus {r}", el => el.Focus());
 
-    public CommandResult Toggle(string r) => ActOn(r, $"toggle {r}", el => el.Patterns.Toggle.Pattern.Toggle());
+    public CommandResult Toggle(string r) => IsAgentRef(r) ? ViaAgent("toggle", r, $"toggle {r}") : ActOn(r, $"toggle {r}", el => el.Patterns.Toggle.Pattern.Toggle());
 
-    public CommandResult Check(string r) => ActOn(r, $"check {r}", el => SetToggle(el, ToggleState.On));
+    public CommandResult Check(string r) => IsAgentRef(r) ? ViaAgent("check", r, $"check {r}") : ActOn(r, $"check {r}", el => SetToggle(el, ToggleState.On));
 
-    public CommandResult Uncheck(string r) => ActOn(r, $"uncheck {r}", el => SetToggle(el, ToggleState.Off));
+    public CommandResult Uncheck(string r) => IsAgentRef(r) ? ViaAgent("uncheck", r, $"uncheck {r}") : ActOn(r, $"uncheck {r}", el => SetToggle(el, ToggleState.Off));
 
-    public CommandResult Select(string r) => ActOn(r, $"select {r}", el =>
+    public CommandResult Select(string r) => IsAgentRef(r) ? ViaAgent("select", r, $"select {r}") : ActOn(r, $"select {r}", el =>
     {
         var sip = el.Patterns.SelectionItem.PatternOrDefault;
         if (sip != null) sip.Select();
         else el.Click();
     });
 
-    public CommandResult Expand(string r) => ActOn(r, $"expand {r}", el => el.Patterns.ExpandCollapse.Pattern.Expand());
+    public CommandResult Expand(string r) => IsAgentRef(r) ? ViaAgent("expand", r, $"expand {r}") : ActOn(r, $"expand {r}", el => el.Patterns.ExpandCollapse.Pattern.Expand());
 
-    public CommandResult Collapse(string r) => ActOn(r, $"collapse {r}", el => el.Patterns.ExpandCollapse.Pattern.Collapse());
+    public CommandResult Collapse(string r) => IsAgentRef(r) ? ViaAgent("collapse", r, $"collapse {r}") : ActOn(r, $"collapse {r}", el => el.Patterns.ExpandCollapse.Pattern.Collapse());
 
     public CommandResult Type(string text) => Exec(() =>
     {
@@ -248,24 +282,47 @@ public sealed class Session : IDisposable
         return BuildResult($"type \"{text}\"");
     });
 
-    public CommandResult Fill(string r, string text, bool submit) => ActOn(r, $"fill {r}", el =>
+    public CommandResult Fill(string r, string text, bool submit)
     {
-        var value = el.Patterns.Value.PatternOrDefault;
-        if (value != null && !value.IsReadOnly.ValueOrDefault) value.SetValue(text);
-        else { el.Focus(); Keyboard.Type(text); }
-        if (submit) Keyboard.Type(VirtualKeyShort.RETURN);
-    });
+        if (!IsAgentRef(r))
+        {
+            return ActOn(r, $"fill {r}", el =>
+            {
+                var value = el.Patterns.Value.PatternOrDefault;
+                if (value != null && !value.IsReadOnly.ValueOrDefault) value.SetValue(text);
+                else { el.Focus(); Keyboard.Type(text); }
+                if (submit) Keyboard.Type(VirtualKeyShort.RETURN);
+            });
+        }
+        var filled = ViaAgent("fill", r, $"fill {r}", text: text);
+        return submit && filled.Ok ? ViaAgent("key", r, $"fill {r} and press Enter", key: "Enter") : filled;
+    }
 
-    public CommandResult Press(string keyName) => Exec(() =>
+    /// <summary>
+    /// Press a key. Without a ref it goes to whatever has keyboard focus; an in-process ref receives
+    /// it directly, which works while the app is in the background.
+    /// </summary>
+    public CommandResult Press(string keyName, string? reference)
     {
-        if (!Keys.TryResolve(keyName, out var vk))
-            return CommandResult.Fail($"Unknown key '{keyName}'. Known keys: {Keys.KnownNames}");
-        Keyboard.Type(vk);
-        return BuildResult($"press {keyName}");
-    });
+        if (reference != null && IsAgentRef(reference)) return ViaAgent("key", reference, $"press {keyName} on {reference}", key: keyName);
+        return Exec(() =>
+        {
+            if (!Keys.TryResolve(keyName, out var vk))
+                return CommandResult.Fail($"Unknown key '{keyName}'. Known keys: {Keys.KnownNames}");
+            if (reference != null)
+            {
+                var el = _registry.Resolve(reference);
+                if (el == null) return Unknown(reference);
+                el.Focus();
+            }
+            Keyboard.Type(vk);
+            return BuildResult($"press {keyName}");
+        });
+    }
 
     public CommandResult Wait(string reference, int timeoutMs) => Exec(() =>
     {
+        if (IsAgentRef(reference)) return WaitViaAgent(reference, timeoutMs);
         var el = _registry.Resolve(reference);
         if (el == null) return Unknown(reference);
         var deadline = DateTime.UtcNow + TimeSpan.FromMilliseconds(timeoutMs);
@@ -300,8 +357,57 @@ public sealed class Session : IDisposable
         });
     }
 
+    private static bool IsAgentRef(string? reference) =>
+        reference is { Length: > 1 } && reference[0] == 'p' && reference.Skip(1).All(char.IsAsciiDigit);
+
+    private CommandResult? RequireAgent(string reference) => _agent == null
+        ? CommandResult.Fail($"'{reference}' is an in-process ref, but this session was not started with 'launch --inproc'.")
+        : null;
+
+    private static CommandResult NotInproc(string command) =>
+        CommandResult.Fail($"'{command}' needs a UI Automation ref (w…e…); in-process refs (p…) only work with snapshot, get, wait, press and the click/fill/state actions.");
+
+    private CommandResult ViaAgent(string cmd, string reference, string note, string? text = null, string? key = null) => Exec(() =>
+    {
+        if (RequireAgent(reference) is { } missing) return missing;
+        var reply = _agent!.Send(new AgentCall { Cmd = cmd, Ref = reference, Text = text, Key = key });
+        return reply.Ok ? BuildResult(note) : CommandResult.Fail(reply.Error ?? "agent error");
+    });
+
+    private CommandResult WaitViaAgent(string reference, int timeoutMs)
+    {
+        if (RequireAgent(reference) is { } missing) return missing;
+        var deadline = DateTime.UtcNow + TimeSpan.FromMilliseconds(timeoutMs);
+        while (true)
+        {
+            var reply = _agent!.Send(new AgentCall { Cmd = "ready", Ref = reference });
+            if (!reply.Ok) return CommandResult.Fail(reply.Error ?? "agent error");
+            if (reply.Value == bool.TrueString) return BuildResult($"wait {reference} ready");
+            if (DateTime.UtcNow >= deadline) return CommandResult.Fail($"'{reference}' not interactable within {timeoutMs} ms.");
+            Thread.Sleep(100);
+        }
+    }
+
+    /// <summary>The in-process view: the agent's WPF tree, under the usual window header.</summary>
+    private CommandResult AgentResult(string? note, string? reference, int depth)
+    {
+        var reply = _agent!.Send(new AgentCall { Cmd = "tree", Ref = reference, Depth = depth });
+        if (!reply.Ok) return CommandResult.Fail(reply.Error ?? "agent error");
+
+        _activeWindow ??= Safe.Get(() => _app?.GetMainWindow(_automation, TimeSpan.FromMilliseconds(200)));
+        return new CommandResult
+        {
+            Ok = true,
+            Note = note,
+            WindowRef = _activeWindow != null ? _registry.GetOrAddWindow(_activeWindow) : null,
+            WindowTitle = _activeWindow != null ? Safe.Str(() => _activeWindow.Title) : null,
+            Snapshot = reply.Snapshot,
+        };
+    }
+
     private CommandResult BuildResult(string? note = null, AutomationElement? snapshotRoot = null, int depth = SnapshotBuilder.DefaultDepth)
     {
+        if (_agent != null && snapshotRoot == null) return AgentResult(note, null, depth);
         if (_activeWindow == null)
             return new CommandResult { Ok = true, Note = note, Snapshot = "(no active window; launch or attach first)" };
 

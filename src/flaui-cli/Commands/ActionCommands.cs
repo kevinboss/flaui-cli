@@ -67,13 +67,17 @@ public sealed class PressSettings : GlobalSettings
     [CommandArgument(0, "<KEY>")]
     [Description("Key name: Enter, Tab, ArrowDown, Escape, F5, …")]
     public string Key { get; set; } = "";
+
+    [CommandArgument(1, "[REF]")]
+    [Description("Send the key to this element instead of whatever has focus.")]
+    public string? Ref { get; set; }
 }
 
 public sealed class PressCommand : Command<PressSettings>
 {
     public override int Execute(CommandContext context, PressSettings settings, CancellationToken cancellationToken)
     {
-        var request = new DaemonRequest { Cmd = "press", Key = settings.Key };
+        var request = new DaemonRequest { Cmd = "press", Key = settings.Key, Ref = settings.Ref };
         return Renderer.Print(settings, DaemonClient.Send(settings.ResolveSession(), request));
     }
 }

@@ -32,6 +32,7 @@ flaui-cli close
 ```bash
 flaui-cli launch notepad.exe
 flaui-cli launch "C:\path\to\app.exe" -- --some arg
+flaui-cli launch "C:\path\to\app.exe" --inproc --minimized   # in-process mode, see below
 flaui-cli attach --pid 1234
 flaui-cli attach --process notepad
 flaui-cli attach --title "Untitled - Notepad"   # regex on the window title
@@ -70,8 +71,30 @@ flaui-cli expand w1e9             # expand / collapse a tree node or combobox
 flaui-cli collapse w1e9
 flaui-cli type "typed into focus" # send keystrokes to whatever has focus
 flaui-cli press Enter             # Enter, Tab, ArrowDown, Escape, Space, F5, …
+flaui-cli press Enter w1e9        # focus that element first, then press
 flaui-cli wait w1e5               # wait until enabled + on-screen (--timeout ms, default 5000)
 ```
+
+### In-process mode (WPF apps on .NET 8+)
+
+`launch --inproc` starts the app with a small agent loaded into it (a .NET startup hook).
+The snapshot then shows the app's real WPF tree with `p` refs (`p12`) instead of the UI Automation tree.
+Use it when the UIA tree hides parts of the app, or when the app must stay in the background:
+every `p`-ref action runs inside the app, so it needs no focus, no mouse and no visible window, and works while the app is minimized.
+
+```bash
+flaui-cli -s=app launch "C:\path\to\App.exe" --inproc --minimized
+flaui-cli -s=app snapshot              # WPF tree: - button "Greet" [ref=p5]
+flaui-cli -s=app fill p3 "Kevin"       # set a textbox value
+flaui-cli -s=app click p5              # invoke a button / toggle / select
+flaui-cli -s=app press Enter p3        # deliver a key straight to that element
+flaui-cli -s=app get p6 label          # role|label|name|type|value|enabled|visible
+```
+
+- Works only for apps started with `launch --inproc`; `attach` cannot load the agent into a running process.
+- `p` refs work with snapshot, get, wait, press, click, dblclick, fill, focus and the state actions; `rightclick`, `hover`, `screenshot` and `ocr` need UIA refs.
+- `[name=X]` in the snapshot is the element's `x:Name`, the most stable way to find a field.
+- A button that contains other controls (a dashboard tile) is shown with its children; a plain button is one line with its text as the label.
 
 ### When the tree can't see it: OCR
 
