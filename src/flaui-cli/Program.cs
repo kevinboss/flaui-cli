@@ -63,7 +63,7 @@ string? GetArg(string name)
 }
 
 // Allow global options before the command (playwright style: `flaui-cli -s=calc launch calc.exe`).
-// Spectre binds options to a command, so move any leading globals to just after the command.
+// Spectre binds options to a command, so move any leading globals to the end, past the command path.
 static string[] HoistGlobals(string[] input)
 {
     var leading = new List<string>();
@@ -87,8 +87,5 @@ static string[] HoistGlobals(string[] input)
 
     if (leading.Count == 0 || i >= input.Length) return input;
 
-    var result = new List<string> { input[i] };   // command
-    result.AddRange(leading);
-    result.AddRange(input.Skip(i + 1));            // command's own args/options
-    return result.ToArray();
+    return [.. input.Skip(i), .. leading];
 }
