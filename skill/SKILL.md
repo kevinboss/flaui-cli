@@ -198,6 +198,7 @@ flaui-cli -s=calc close
 ## Installing this skill
 
 `flaui-cli skill install` writes this file to `~/.claude/skills/flaui-cli/SKILL.md`.
+It refuses to replace an existing copy unless given `--force`.
 
 ## Notes
 

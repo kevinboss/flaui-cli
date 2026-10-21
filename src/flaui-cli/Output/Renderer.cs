@@ -52,4 +52,23 @@ public static class Renderer
 
         return 0;
     }
+
+    /// <summary>Prints the result of a command that runs without the daemon, honoring --raw / --json.</summary>
+    public static int Print(GlobalSettings settings, string? error, string? value = null, string? message = null)
+    {
+        if (settings.Json)
+        {
+            Console.WriteLine(JsonSerializer.Serialize(new { ok = error is null, error, value }, Protocol.Json));
+            return error is null ? 0 : 1;
+        }
+
+        if (error is not null)
+        {
+            Console.Error.WriteLine($"Error: {error}");
+            return 1;
+        }
+
+        Console.WriteLine(settings.Raw ? value : message ?? value);
+        return 0;
+    }
 }

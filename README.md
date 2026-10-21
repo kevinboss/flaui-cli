@@ -61,7 +61,7 @@ flaui-cli close                  # stop the session
 | `wait <ref> [--timeout ms]` | Wait until an element is enabled and on-screen |
 | `batch [--file P]` | Run a JSON array of commands in one round-trip |
 | `list` / `close` / `close-all` / `kill-all` | Session management |
-| `skill install` | Install the Claude Code skill to `~/.claude/skills` |
+| `skill install [-f]` | Install the Claude Code skill to `~/.claude/skills` (`--force` overwrites) |
 
 Global options: `-s=<session>` (or `$FLAUI_CLI_SESSION`), `--raw`, `--json`.
 
@@ -84,6 +84,8 @@ Global options: `-s=<session>` (or `$FLAUI_CLI_SESSION`), `--raw`, `--json`.
 
 `flaui-cli skill install` writes `SKILL.md` to `~/.claude/skills/flaui-cli`, so an agent can drive
 desktop apps the way the `playwright-cli` skill drives browsers.
+An existing `SKILL.md` is left alone unless you pass `--force`, so after upgrading run
+`flaui-cli skill install --force` to pick up the new version.
 
 ## Layout
 
