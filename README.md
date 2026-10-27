@@ -69,7 +69,7 @@ flaui-cli screenshot w1e7 --filename dialog.png
 flaui-cli ocr --words
 flaui-cli click-at 303 360
 
-# In-process mode for WPF apps on .NET 8+ (p refs work in the background)
+# Inject the in-process agent into a WPF app (see below)
 flaui-cli launch "C:\path\to\App.exe" --inproc --minimized
 
 # Several commands in one round-trip
@@ -92,6 +92,31 @@ flaui-cli --json get w1e3
 
 All commands support `--json` for the full response and `--raw` for the result value only.
 `-s=<session>` (or `$FLAUI_CLI_SESSION`) picks the session.
+
+## In-process agent
+
+For WPF apps on .NET 8+, `launch --inproc` injects a small agent into the app as a .NET startup
+hook. The agent is embedded in `flaui-cli.exe`, written to disk on launch and loaded via
+`DOTNET_STARTUP_HOOKS` before the app's `Main` runs. It serves its own named pipe from inside the
+app and runs every request on the app's UI thread.
+
+The snapshot then shows the app's real WPF tree with `p` refs instead of the UI Automation tree.
+Actions on `p` refs go through automation peers inside the app, so they need no focus, no mouse
+and no visible window, and keep working while the app is minimized or covered.
+
+```bash
+flaui-cli -s=app launch "C:\path\to\App.exe" --inproc --minimized
+flaui-cli -s=app snapshot              # WPF tree: - button "Greet" [ref=p5]
+flaui-cli -s=app fill p3 "Kevin"       # set a textbox value
+flaui-cli -s=app click p5              # invoke a button / toggle / select
+flaui-cli -s=app press Enter p3        # deliver a key straight to that element
+flaui-cli -s=app get p6 label          # role|label|name|type|value|enabled|visible
+```
+
+- Only for apps started with `launch --inproc`; `attach` cannot inject into a running process.
+- `p` refs work with snapshot, get, wait, press, click, dblclick, fill, focus and the state actions.
+  `rightclick`, `hover`, `screenshot` and `ocr` need UI Automation refs (`w1e…`).
+- `[name=X]` in the snapshot is the element's `x:Name`, the most stable way to find a field.
 
 ## Build
 
