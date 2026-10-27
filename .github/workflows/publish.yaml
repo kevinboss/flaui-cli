@@ -1,0 +1,51 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release (windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v5.0.1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Create build data
+        shell: bash
+        id: build-data
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "version=${tag#v}" >> $GITHUB_OUTPUT
+          echo "release_name=flaui-cli-$tag-win-x64" >> $GITHUB_OUTPUT
+
+      - name: Build
+        shell: bash
+        run: |
+          dotnet publish src/flaui-cli/flaui-cli.csproj --self-contained --runtime win-x64 -c Release -o "${{ steps.build-data.outputs.release_name }}" -p:Version=${{ steps.build-data.outputs.version }} -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Package
+        shell: bash
+        run: |
+          7z a -tzip "${{ steps.build-data.outputs.release_name }}.zip" "./${{ steps.build-data.outputs.release_name }}/*"
+          cp "./${{ steps.build-data.outputs.release_name }}/flaui-cli.exe" "./flaui-cli.exe"
+          rm -r "${{ steps.build-data.outputs.release_name }}"
+
+      - name: Publish
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            ${{ steps.build-data.outputs.release_name }}.zip
+            flaui-cli.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
