@@ -6,12 +6,34 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white" alt=".NET">
-  <img src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" alt="Windows">
   <img src="https://img.shields.io/badge/UI%20Automation-FlaUI%20(UIA3)-6E4AFF" alt="FlaUI (UIA3)">
-  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT">
+  <a href="https://github.com/kevinboss/maple"><img src="https://img.shields.io/scoop/v/flaui-cli?bucket=https://github.com/kevinboss/maple" alt="Scoop"></a>
+  <a href="https://github.com/microsoft/winget-pkgs/tree/master/manifests/k/kevinboss/flaui-cli"><img src="https://img.shields.io/badge/winget-kevinboss.flaui--cli-0078D4?logo=windows&logoColor=white" alt="winget"></a>
+  <a href="https://github.com/kevinboss/flaui-cli/actions/workflows/publish.yaml"><img src="https://img.shields.io/github/actions/workflow/status/kevinboss/flaui-cli/publish.yaml?label=CI" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/kevinboss/flaui-cli" alt="License"></a>
 </p>
 
 > This project is being developed using AI development tools. However, every line of code is reviewed and approved by a human before being committed.
+
+## Install
+
+**Scoop**
+
+```powershell
+scoop bucket add maple 'https://github.com/kevinboss/maple.git'
+scoop install flaui-cli
+```
+
+**Winget**
+
+```powershell
+winget install kevinboss.flaui-cli
+```
+
+**Manual**
+
+Grab `flaui-cli.exe` from the [releases page](https://github.com/kevinboss/flaui-cli/releases)
+and put it on your `PATH`.
 
 ## Usage
 
