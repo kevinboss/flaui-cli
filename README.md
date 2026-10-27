@@ -11,6 +11,7 @@
   <a href="https://github.com/microsoft/winget-pkgs/tree/master/manifests/k/kevinboss/flaui-cli"><img src="https://img.shields.io/badge/winget-kevinboss.flaui--cli-0078D4?logo=windows&logoColor=white" alt="winget"></a>
   <a href="https://github.com/kevinboss/flaui-cli/actions/workflows/publish.yaml"><img src="https://img.shields.io/github/actions/workflow/status/kevinboss/flaui-cli/publish.yaml?label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/kevinboss/flaui-cli" alt="License"></a>
+  <a href="https://github.com/kevinboss/heartbeat"><img src="https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_flaui-cli.svg" alt="Heartbeat"></a>
 </p>
 
 > This project is being developed using AI development tools. However, every line of code is reviewed and approved by a human before being committed.
