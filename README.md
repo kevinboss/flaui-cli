@@ -13,90 +13,96 @@
 
 > This project is being developed using AI development tools. However, every line of code is reviewed and approved by a human before being committed.
 
-A Playwright-style command-line tool for driving Windows desktop applications (Win32, WinForms,
-WPF, UWP) through their UI Automation tree. A per-session background daemon holds the app's live
-UIA tree and hands out short element refs (`w1e42`); you `snapshot` to see the tree, then act on
-refs. Interactions use UIA control patterns first (Invoke, Toggle, SetValue), so most actions do
-not move the mouse or steal keyboard focus.
+## Usage
 
-Built on [FlaUI](https://github.com/FlaUI/FlaUI) (UIA3). CLI framework: `Spectre.Console.Cli`.
+```bash
+# Launch an app (starts the session daemon on first use)
+flaui-cli launch notepad.exe
+flaui-cli launch "C:\path\to\app.exe" -- --some arg
 
-## Install
+# Or attach to one that is already running
+flaui-cli attach --process notepad
+flaui-cli attach --title "Untitled - Notepad"
 
-Windows only (FlaUI needs a `-windows` target). Publish a self-contained single-file exe:
+# Snapshot the active window and note the element refs (w1e3, w1e7, …)
+flaui-cli snapshot
+flaui-cli snapshot w1e7 --depth 2
 
+# Snapshot every top-level window on the desktop
+flaui-cli desktop
+
+# List the app's windows and switch the active one
+flaui-cli windows
+flaui-cli window-select w2
+
+# Read an element property, or dump them all
+flaui-cli get w1e3 value
+flaui-cli get w1e3
+
+# Fill a textbox and submit (uses the Value pattern, no keystrokes)
+flaui-cli fill w1e3 "hello" --submit
+
+# Click, check, select, expand (UIA patterns first, so no mouse movement)
+flaui-cli click w1e5
+flaui-cli check w1e8
+flaui-cli select w1e12
+flaui-cli expand w1e15
+
+# Real pointer input when an app needs it
+flaui-cli dblclick w1e20
+flaui-cli rightclick w1e20
+flaui-cli hover w1e21
+
+# Keyboard: type into focus, or press a key on a given element
+flaui-cli type "some text"
+flaui-cli press Enter
+flaui-cli press F5 w1e3
+
+# Wait until an element is enabled and on-screen
+flaui-cli wait w1e9 --timeout 10000
+
+# Screenshot the window or a single element
+flaui-cli screenshot
+flaui-cli screenshot w1e7 --filename dialog.png
+
+# Read text that UI Automation can't see, then click it by position
+flaui-cli ocr --words
+flaui-cli click-at 303 360
+
+# In-process mode for WPF apps on .NET 8+ (p refs work in the background)
+flaui-cli launch "C:\path\to\App.exe" --inproc --minimized
+
+# Several commands in one round-trip
+echo '[{"cmd":"fill","ref":"w1e2","text":"hi"},{"cmd":"click","ref":"w1e5"}]' | flaui-cli batch
+
+# Named sessions drive several apps side by side
+flaui-cli -s=calc launch calc.exe
+flaui-cli -s=calc snapshot
+flaui-cli list
+flaui-cli close
+flaui-cli close-all
+
+# Install the flaui-cli skill into Claude Code
+flaui-cli skill install
+
+# Scriptable output
+flaui-cli --raw snapshot > tree.txt
+flaui-cli --json get w1e3
 ```
+
+All commands support `--json` for the full response and `--raw` for the result value only.
+`-s=<session>` (or `$FLAUI_CLI_SESSION`) picks the session.
+
+## Build
+
+```bash
+dotnet build src/flaui-cli.slnx
+dotnet run --project src/flaui-cli -- <command>
 dotnet publish src/flaui-cli/flaui-cli.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
 ```
 
-Copy `publish/flaui-cli.exe` onto a directory on your PATH.
-
-## Quick start
-
-```
-flaui-cli launch notepad.exe     # start an app (spawns the session daemon)
-flaui-cli snapshot               # read the tree, note the element refs
-flaui-cli fill w1e3 "hello"      # set a textbox value by ref
-flaui-cli press Enter
-flaui-cli close                  # stop the session
-```
-
-## Commands
-
-| Command | Purpose |
-|---|---|
-| `launch <exe> [-- args] [--inproc] [--minimized]` | Launch an app and attach automation; `--inproc` loads the in-process agent |
-| `attach --pid \| --process \| --title` | Attach to a running app |
-| `snapshot [ref] [--depth N]` | Snapshot the active window or a subtree |
-| `desktop [--depth N]` | Snapshot all top-level windows |
-| `windows` / `window-select <ref>` | List the app's windows / switch the active one |
-| `get <ref> [property]` | Read an element property (or dump all) |
-| `screenshot [ref] [--filename P]` | Capture the window or an element to a PNG |
-| `ocr [ref] [--words] [--lang TAG]` | Read on-screen text with screen positions, for UI that UI Automation can't see |
-| `click` / `dblclick` / `rightclick` / `hover` / `focus` `<ref>` | Pointer and focus actions (pattern-first) |
-| `click-at <x> <y> [--double] [--right]` | Click at screen coordinates, e.g. an `[at=x,y]` from `ocr` |
-| `check` / `uncheck` / `toggle` / `select` / `expand` / `collapse` `<ref>` | State actions |
-| `fill <ref> <text> [--submit]` | Set a textbox value, optionally press Enter |
-| `type <text>` / `press <key> [ref]` | Type into focus / press Enter, Tab, ArrowDown, F5, … (into a given element with a ref) |
-| `wait <ref> [--timeout ms]` | Wait until an element is enabled and on-screen |
-| `batch [--file P]` | Run a JSON array of commands in one round-trip |
-| `list` / `close` / `close-all` / `kill-all` | Session management |
-| `skill install [-f]` | Install the Claude Code skill to `~/.claude/skills` (`--force` overwrites) |
-
-Global options: `-s=<session>` (or `$FLAUI_CLI_SESSION`), `--raw`, `--json`.
-
-## How it works
-
-- One binary, two roles: a thin client, and a per-session daemon spawned detached on first use.
-- The daemon owns a single long-lived **MTA** worker thread that makes every UIA call (per
-  Microsoft's UI Automation threading guidance) plus a ref registry. Refs are stable for the life
-  of the session, deduped by UIA `RuntimeId`.
-- Client and daemon exchange one JSON request/response per command over a named pipe. The daemon
-  shuts itself down after 10 minutes idle.
-- In-process mode (`launch --inproc`, WPF apps on .NET 8+) adds a third piece: an agent assembly,
-  embedded in the exe, that the daemon writes to disk and the app loads as a .NET startup hook.
-  The agent serves its own pipe from inside the app and runs each request on the app's UI thread.
-  The daemon routes `p` refs to it and everything else through UIA as before.
-  Actions run through automation peers the agent creates for the target element, so they need no
-  real input, focus or visible window.
-
-## Claude Code skill
-
-`flaui-cli skill install` writes `SKILL.md` to `~/.claude/skills/flaui-cli`, so an agent can drive
-desktop apps the way the `playwright-cli` skill drives browsers.
-An existing `SKILL.md` is left alone unless you pass `--force`, so after upgrading run
-`flaui-cli skill install --force` to pick up the new version.
-
-## Layout
-
-```
-src/flaui-cli        entry point: CLI client + daemon host
-src/flaui-cli.Core   engine: UIA worker, session, ref registry, snapshot builder
-src/flaui-cli.Agent  in-process agent: startup hook loaded into the app for --inproc
-samples/DemoWpfApp   a small WPF app used for verification
-skill/SKILL.md       the Claude Code skill (embedded into the exe)
-```
+Windows only. The publish step produces a single `publish/flaui-cli.exe`; put it on your PATH.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE)
